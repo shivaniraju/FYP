@@ -60,16 +60,17 @@ def view_reports():
     return {"reports_database": reports_database}
 
 
-def find_report(id):
+def find_report(id:int):
     for r in reports_database:
         if r["ID"]==id:
             return r
-
-def find_report_index(id):
-    for i, p in enumerate(reports_database):
-        if p['ID'] == id:
+       
+def find_report_index(id:int):
+    for i, r in enumerate(reports_database):
+        if r['ID'] == id:
             return i
-        
+
+    
 @app.get("/datactr/reports/{id}")
 def get_report(id:int, response: Response):
     report=find_report(int(id))
@@ -86,12 +87,25 @@ def create_reports(new_report: Report):
     return{"new_rentry":reports_dict}
 
 @app.delete("/datactr/reports/{id}")
-def delete_report(id):
+def delete_report(id: int, status_code=status.HTTP_204_NO_CONTENT):
     #deleting post
-    # find th eindex in the array that has the required ID
+    # find the index in the array that has the required ID
     # reports_database.pop(index)
     index = find_report_index(id)
+    if index == None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail = f"post with id: {id} was not found")
     reports_database.pop(index)
-    return {'message': "report was sucessfully deleted!"}
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+@app.put("/datactr/reports/{id}")
+def update_post(id: int, report: Report):
+    index = find_report_index(id)
+    if index == None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail = f"post with id: {id} was not found")
+    r_dict = report.dict()
+    r_dict["ID"] = id
+    reports_database[index] = r_dict
+    #print(report)
+    return{"data":r_dict}
 
 ############################################################# 
