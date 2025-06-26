@@ -1,4 +1,4 @@
-from fastapi import FastAPI,Response
+from fastapi import FastAPI,Response, status, HTTPException
 from fastapi.params import Body
 from pydantic import BaseModel,validator
 from typing import Union
@@ -47,14 +47,14 @@ reports_database=[{ "ID":1,"Dashboard": "production",
 @app.get("/")
 def root():
     return {"message":"Welcome"}
-
+#############################################################
 # to display the latest BCP and Statistics
 # @app.get("/home")
 # def get_latest_incident():
 #     incident=incidents_database[len(incident_database)-1]
 #     return{"detail": incident}
 
-
+#############################################################
 @app.get("/datactr/reports")
 def view_reports():
     return {"reports_database": reports_database}
@@ -64,18 +64,34 @@ def find_report(id):
     for r in reports_database:
         if r["ID"]==id:
             return r
+
+def find_report_index(id):
+    for i, p in enumerate(reports_database):
+        if p['ID'] == id:
+            return i
         
 @app.get("/datactr/reports/{id}")
 def get_report(id:int, response: Response):
     report=find_report(int(id))
     if not report:
-        response.status_code = 404
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail = f"post with id: {id} was not found")
     return{"report_detail": report}
 
 
-@app.post("/datactr/reports")
+@app.post("/datactr/reports", status_code=status.HTTP_201_CREATED)
 def create_reports(new_report: Report):
     reports_dict = new_report.dict()
     reports_dict['ID'] = randrange(0, 1000000)
     reports_database.append(reports_dict)
     return{"new_rentry":reports_dict}
+
+@app.delete("/datactr/reports/{id}")
+def delete_report(id):
+    #deleting post
+    # find th eindex in the array that has the required ID
+    # reports_database.pop(index)
+    index = find_report_index(id)
+    reports_database.pop(index)
+    return {'message': "report was sucessfully deleted!"}
+
+############################################################# 
